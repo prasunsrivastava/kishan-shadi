@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Kishan Shadi Results</title>
+<meta name="robots" content="noindex, nofollow">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Mukta:wght@400;600;700&family=Rozha+One&display=swap">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div id="demo"></div>
+<header class="wrap mast">
+  <span class="eyebrow">Kishan Shadi · Family votes</span>
+  <h1>What the family likes</h1>
+  <p>This page updates by itself every 30 seconds.</p>
+</header>
+
+<div id="signin" class="wrap"></div>
+
+<div id="app" hidden>
+  <div class="bar">
+    <div class="wrap">
+      <div class="who">Signed in as <b id="me"></b></div>
+      <span class="spacer"></span>
+      <span class="status" id="updated"></span>
+      <button class="linkbtn" id="reload" type="button">Refresh now</button>
+      <a class="btn-ghost" href="index.html">Back to outfits</a>
+    </div>
+  </div>
+  <main class="wrap">
+    <div class="stats" id="stats"></div>
+
+    <h2 class="section-h">Most liked outfits</h2>
+    <ol class="rank" id="rank"></ol>
+
+    <h2 class="section-h">Who liked what</h2>
+    <div class="people" id="people"></div>
+
+    <h2 class="section-h">Ready to buy or designer</h2>
+    <div class="split" id="split"></div>
+
+    <p class="foot-note">Only people with the family password can see this page.</p>
+  </main>
+</div>
+
+<script src="config.js"></script>
+<script src="items.js"></script>
+<script src="common.js"></script>
+<script src="analytics.js"></script>
+</body>
+</html>

@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Kishan Shadi Outfits</title>
+<meta name="robots" content="noindex, nofollow">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Mukta:wght@400;600;700&family=Rozha+One&display=swap">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div id="demo"></div>
+<header class="wrap mast">
+  <span class="eyebrow">Kishan Shadi · Sangeet and more</span>
+  <h1>Pick Kishan's outfits</h1>
+  <p>Tap the heart on every outfit you like. Tap a photo to see it large. Everyone's likes add up on the results page.</p>
+</header>
+
+<div id="signin" class="wrap"></div>
+
+<div id="app" hidden>
+  <div class="bar">
+    <div class="wrap">
+      <div class="who">Hi, <b id="me"></b> <span class="pill" id="mycount"></span></div>
+      <span class="spacer"></span>
+      <a class="btn-ghost" href="analytics.html">See results</a>
+      <button class="linkbtn" id="signout" type="button">Not you? Sign out</button>
+    </div>
+  </div>
+  <main class="wrap">
+    <div class="tools">
+      <div class="seg" id="filters" role="group" aria-label="Show"></div>
+      <label for="sort">Sort
+        <select id="sort">
+          <option value="list">List order</option>
+          <option value="likes">Most liked</option>
+          <option value="price">Price, low to high</option>
+        </select>
+      </label>
+      <span class="count-note" id="shown"></span>
+    </div>
+    <div class="grid" id="grid"></div>
+    <p class="foot-note">Prices are as shown on each shop's website on 31 Oct 2026. They can change. Designer pieces are usually made to order, so check the delivery time before you order.</p>
+  </main>
+</div>
+
+<div class="lb" id="lb" hidden role="dialog" aria-modal="true" aria-label="Outfit photo">
+  <button class="close" id="lb-close" type="button" aria-label="Close">×</button>
+  <button class="nav" id="lb-prev" type="button" aria-label="Previous outfit">‹</button>
+  <div class="stage">
+    <img id="lb-img" alt="">
+    <div class="info">
+      <h3 id="lb-name"></h3>
+      <div class="sub" id="lb-sub"></div>
+      <button class="heart" id="lb-heart" type="button" aria-pressed="false"></button>
+      <div class="who-liked" id="lb-who"></div>
+      <a id="lb-link" target="_blank" rel="noopener">Open on the shop's website ↗</a>
+    </div>
+  </div>
+  <button class="nav" id="lb-next" type="button" aria-label="Next outfit">›</button>
+</div>
+
+<script src="config.js"></script>
+<script src="items.js"></script>
+<script src="common.js"></script>
+<script src="gallery.js"></script>
+</body>
+</html>
