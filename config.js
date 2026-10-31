@@ -4,7 +4,7 @@
 // Both values are safe to put on a public website. The password check runs inside Supabase.
 // Leave them empty to try the site in demo mode (password: demo).
 window.CONFIG = {
-  SUPABASE_URL: "",
-  SUPABASE_KEY: "",
+  SUPABASE_URL: "https://vongllgjlahappivjjtr.supabase.co",
+  SUPABASE_KEY: "sb_publishable_hwot3_kv8A2Ue7mn5oYPTQ_t68Qo05Z",
   ORGANISER: "Prasun"
 };
