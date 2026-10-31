@@ -2,7 +2,8 @@
 (function () {
   const C = window.CONFIG || {};
   const DEMO = !C.SUPABASE_URL || !C.SUPABASE_KEY;
-  const KEY_NAME = "ks_name", KEY_PW = "ks_pw", KEY_DEMO = "ks_demo_likes";
+  const KEY_NAME = "ks_name", KEY_PW = "ks_pw", KEY_DEMO = "ks_demo_likes", KEY_DEMO_SUG = "ks_demo_suggestions";
+  const MAX_PHOTOS = 10, MAX_LINKS = 10;
 
   const store = {
     get(k) { try { return localStorage.getItem(k); } catch (e) { return null; } },
@@ -29,6 +30,22 @@
       return null;
     }
     if (fn === "family_all_likes") return rows;
+    if (fn === "family_items") return (window.ITEMS || []).map(i => Object.assign({ grp: i.group }, i));
+    let sug = [];
+    try { sug = JSON.parse(store.get(KEY_DEMO_SUG) || "[]"); } catch (e) {}
+    if (fn === "family_suggest") {
+      const links = (b.p_links || []).map(s => s.trim()).filter(Boolean), photos = b.p_photos || [];
+      if (links.length > MAX_LINKS) throw new Error("too_many_links");
+      if (photos.length > MAX_PHOTOS) throw new Error("too_many_photos");
+      if (links.some(l => !/^https?:\/\/\S+$/i.test(l))) throw new Error("bad_link");
+      if (!links.length && !photos.length) throw new Error("empty_suggestion");
+      // Demo keeps only the first photo, so the device storage does not fill up.
+      sug.unshift({ id: Date.now(), voter: clean(b.p_name).toLowerCase(), links, note: b.p_note || "", status: "new", result_note: null,
+        created_at: new Date().toISOString(), photo_count: photos.length, cover: photos[0] || null, added: [] });
+      store.set(KEY_DEMO_SUG, JSON.stringify(sug.slice(0, 5)));
+      return sug[0].id;
+    }
+    if (fn === "family_my_suggestions") return sug.filter(s => s.voter === clean(b.p_name).toLowerCase());
     throw new Error("unknown");
   }
 
@@ -54,6 +71,14 @@
     if (m.includes("wrong_password")) return "That password is not right. Ask " + (C.ORGANISER || "the organiser") + " for the family password.";
     if (m.includes("name_too_short")) return "Please type your name (at least 2 letters).";
     if (m === "network") return "Could not reach the server. Check your internet and try again.";
+    if (m.includes("empty_suggestion")) return "Please add at least one photo or one link.";
+    if (m.includes("too_many_photos")) return "You can send up to " + MAX_PHOTOS + " photos at a time.";
+    if (m.includes("too_many_links")) return "You can send up to " + MAX_LINKS + " links at a time.";
+    if (m.includes("bad_link")) return "One of the links is not a web address. Each link must start with http:// or https://.";
+    if (m.includes("bad_photo")) return "One of the photos could not be used. Please try a different photo.";
+    if (m.includes("daily_limit")) return "You have sent 10 suggestions today. Please send more tomorrow.";
+    if (m.includes("queue_full")) return "There are many suggestions waiting. Please try again in a day or two.";
+    if (m.includes("Could not find the function") || m.includes("PGRST202")) return "This feature is not switched on yet. Ask " + (C.ORGANISER || "the organiser") + " to finish the setup.";
     return "Something went wrong (" + m.slice(0, 80) + "). Please try again.";
   }
 
@@ -63,18 +88,76 @@
     clear() { store.del(KEY_NAME); store.del(KEY_PW); }
   };
 
-  const items = window.ITEMS || [];
-  const byId = Object.fromEntries(items.map(i => [i.id, i]));
+  // The outfit list. It starts with items.js and is replaced by the list from
+  // Supabase after sign-in. The array and the lookup object are changed in place,
+  // so other files can keep their references.
+  const items = [], byId = {};
+  function setItems(list) {
+    items.length = 0;
+    for (const k of Object.keys(byId)) delete byId[k];
+    for (const r of list) {
+      const it = { id: r.id, name: r.name, brand: r.brand, shop: r.shop, price: Number(r.price), currency: r.currency,
+        url: r.url, img: r.img, group: r.group || r.grp, note: r.note || "", added_at: r.added_at || null, suggested_by: r.suggested_by || "" };
+      items.push(it); byId[it.id] = it;
+    }
+  }
+  setItems(window.ITEMS || []);
+
+  // Loads the list from Supabase. If step 2 of the setup is not done yet, it keeps items.js.
+  async function loadItems(password) {
+    try {
+      const list = await rpc("family_items", { p_password: password });
+      if (Array.isArray(list) && list.length) setItems(list);
+      return true;
+    } catch (e) {
+      if (String(e.message).includes("wrong_password")) throw e;
+      return false;
+    }
+  }
+
+  const NEW_DAYS = 14;
+  function isNew(i) { return !!i.added_at && (Date.now() - new Date(i.added_at).getTime()) < NEW_DAYS * 864e5; }
 
   function price(i) {
     if (i.currency === "USD") return "US$" + i.price.toLocaleString("en-US");
     return "₹" + i.price.toLocaleString("en-IN");
   }
   function thumb(i, w) {
-    if (i.img.includes("cdn.shopify.com")) return i.img + "?width=" + w;
-    if (i.img.includes("scene7.com")) return i.img + "?wid=" + w;
-    if (i.img.includes("azafashions.com")) return i.img.replace("tr:w-900", "tr:w-" + w);
-    return i.img;
+    const src = i.img || "";
+    if (src.includes("cdn.shopify.com")) return src + (src.includes("?") ? "&" : "?") + "width=" + w;
+    if (src.includes("scene7.com")) return src + (src.includes("?") ? "&" : "?") + "wid=" + w;
+    if (src.includes("azafashions.com")) return src.replace("tr:w-900", "tr:w-" + w);
+    return src;
+  }
+
+  // Runs fn every ms milliseconds, but only while the page is on screen.
+  // When the person comes back to the page, it runs fn at once.
+  function whileVisible(fn, ms) {
+    let t = null;
+    const on = () => document.visibilityState === "visible";
+    const arm = () => { clearInterval(t); t = on() ? setInterval(fn, ms) : null; };
+    const onChange = () => { if (on()) fn(); arm(); };
+    document.addEventListener("visibilitychange", onChange);
+    arm();
+    return () => { clearInterval(t); document.removeEventListener("visibilitychange", onChange); };
+  }
+
+  // Shrinks a photo to a JPEG that is at most 1000 px on the long side.
+  // Returns a data URL (about 100 to 250 KB of text).
+  async function shrinkPhoto(file) {
+    const url = URL.createObjectURL(file);
+    try {
+      const img = await new Promise((ok, bad) => { const i = new Image(); i.onload = () => ok(i); i.onerror = () => bad(new Error("bad_photo")); i.src = url; });
+      for (const [side, q] of [[1000, 0.78], [850, 0.68], [700, 0.6], [560, 0.55]]) {
+        const s = Math.min(1, side / Math.max(img.naturalWidth, img.naturalHeight));
+        const c = document.createElement("canvas");
+        c.width = Math.max(1, Math.round(img.naturalWidth * s)); c.height = Math.max(1, Math.round(img.naturalHeight * s));
+        const g = c.getContext("2d"); g.fillStyle = "#fff"; g.fillRect(0, 0, c.width, c.height); g.drawImage(img, 0, 0, c.width, c.height);
+        const d = c.toDataURL("image/jpeg", q);
+        if (d.length <= 380000) return d;
+      }
+      throw new Error("bad_photo");
+    } finally { URL.revokeObjectURL(url); }
   }
   function el(tag, attrs, ...kids) {
     const e = document.createElement(tag);
@@ -123,5 +206,6 @@
     return el("div", { class: "demo-banner" }, "Demo mode: likes stay on this device only. Add the Supabase details in config.js to share likes with the family.");
   }
 
-  window.KS = { rpc, errorText, session, items, byId, price, thumb, el, renderSignIn, demoBanner, DEMO };
+  window.KS = { rpc, errorText, session, items, byId, setItems, loadItems, isNew, price, thumb, el, renderSignIn, demoBanner,
+    whileVisible, shrinkPhoto, MAX_PHOTOS, MAX_LINKS, DEMO };
 })();

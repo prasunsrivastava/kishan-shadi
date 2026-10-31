@@ -1,0 +1,14 @@
+# Secrets and personal notes: never upload these.
+.env
+.env.*
+!.env.example
+TASTE.local.md
+*.local.md
+
+# Files made by the daily run.
+worker/photos/
+worker/tmp/
+worker/logs/
+
+.DS_Store
+__pycache__/

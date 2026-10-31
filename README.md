@@ -1,52 +1,52 @@
 # Kishan Shadi Outfits
 
-A small website for the family to like outfits for Kishan's wedding functions.
+A small website for the family to like outfits for Kishan's wedding functions, and to suggest new ones.
 
-- `index.html`: the outfit gallery. Each person types their name and the family password, then taps hearts.
-- `analytics.html`: the results page. It shows the most liked outfits, who liked what, and totals. It updates every 30 seconds.
-- `items.js`: the list of 56 outfits (31 ready to buy, 25 designer).
-- `config.js`: your Supabase address and key.
-- `supabase/setup.sql`: the database setup.
+- Site: https://prasunsrivastava.github.io/kishan-shadi/
+- Results: https://prasunsrivastava.github.io/kishan-shadi/analytics.html
 
-The site has no server. GitHub Pages hosts the pages for free. Supabase (free tier) stores the likes.
+What is in this folder:
 
-## Step 1: Set up Supabase (about 10 minutes)
+- `index.html`: the outfit gallery. Each person types their name and the family password, then taps hearts. They can also suggest an outfit with up to 10 photos or links.
+- `analytics.html`: the results page. It shows the most liked outfits, who liked what, and totals.
+- `config.js`: the Supabase address and the publishable key.
+- `supabase/setup.sql` and `supabase/setup2.sql`: the database setup.
+- `worker/`: the daily search that turns suggestions into outfits. It runs on Prasun's laptop.
+- `items.js`: the first 56 outfits. The live list is now in Supabase.
+- `CLAUDE.md`: notes for Claude Code.
 
-1. Sign in at https://supabase.com and click **New project**. Give it any name, for example `kishan-shadi`. Pick the region **Mumbai** (ap-south-1). Set a database password and keep it safe. You do not need it for the site.
-2. When the project is ready, open **SQL Editor** in the left menu, then click **New query**.
-3. Open `supabase/setup.sql`, copy all of it, and paste it into the editor.
-4. Near the bottom of the file, replace `CHANGE-ME` with the family password you want to use.
-5. Click **Run**. You should see "Success. No rows returned".
-6. Open **Project Settings > API Keys** (on some screens: **Data API**). Copy:
-   - the **Project URL** (looks like `https://abcdefghijkl.supabase.co`)
-   - the **publishable** key (starts with `sb_publishable_`). The older **anon** key also works.
+The site has no server. GitHub Pages hosts the pages for free. Supabase (free tier) stores the likes, the outfit list and the suggestions. The pages refresh every 30 seconds, but only while they are on screen.
 
-Both values are safe to put on a public website. The tables are locked. The site can only call three functions, and each one checks the family password inside Supabase.
+## Setup (already done)
 
-To change the password later, run only the last statement of `setup.sql` again with the new password.
+1. Supabase project created. `supabase/setup.sql` run with the family password in place of `CHANGE-ME`.
+2. Project URL and publishable key added to `config.js`.
+3. GitHub Pages publishes from the `main` branch.
 
-## Step 2: Add the values to config.js
+## Step 4: Switch on suggestions
 
-Open `config.js` and paste the two values:
+1. In Supabase, open **SQL Editor** and click **New query**.
+2. Copy all of `supabase/setup2.sql`, paste it, and click **Run**. You should see "Success. No rows returned".
 
-```js
-SUPABASE_URL: "https://abcdefghijkl.supabase.co",
-SUPABASE_KEY: "sb_publishable_xxxxxxxx",
-```
+This moves the outfit list into Supabase and switches on the "Suggest an outfit" form. It does not change the likes or the password. You can run it again safely.
 
-If you leave them empty, the site runs in demo mode. The demo password is `demo`, and likes stay only on that device.
+Until you run it, the site shows the 56 outfits from `items.js`, and the suggestion form says the feature is not switched on yet.
 
-## Step 3: GitHub Pages
+## Step 5: Set up the daily search on the laptop
 
-This repository is already set up to publish from the `main` branch. The site is at https://prasunsrivastava.github.io/kishan-shadi/ and the results page is at https://prasunsrivastava.github.io/kishan-shadi/analytics.html.
+1. Install Claude Code, then run `git clone https://github.com/prasunsrivastava/kishan-shadi` and `cd kishan-shadi`.
+2. Put `TASTE.local.md` in this folder. It is never uploaded to GitHub.
+3. Copy `.env.example` to `.env`. In Supabase, open **Project Settings > API Keys > Secret keys**, create or copy a secret key, and paste it into `.env`. Never put the secret key anywhere else.
+4. Test the connection: `python3 worker/sb.py new`. It prints the waiting suggestions (an empty list `[]` is fine).
+5. Run `claude` in the folder and say "set up the daily run from CLAUDE.md". Claude Code checks `worker/run-daily.sh` and schedules it.
 
-After you change a file on GitHub, the site updates in about a minute.
-
-The repository is public, so anyone can see the code and the outfit list. They cannot see or change the likes without the family password. The pages also ask search engines not to list them.
+To run the search by hand, open Claude Code in the folder and say "process new suggestions".
 
 ## Day-to-day notes
 
 - Ask each person to use the same name every time. "Meena Aunty" and "meena aunty" count as the same person. "Meena" is a different person.
 - To remove a stray name or all likes, open Supabase **Table Editor > likes** and delete the rows.
-- To add an outfit, copy one line in `items.js`, give it a new `id` (for example `r32`), and upload the file again. Never reuse an old `id`, because likes are stored against it.
-- Photos load from the shop websites. If a shop removes a product, its photo will stop showing.
+- To take an outfit off the site, run `python3 worker/sb.py hide ID`. Never delete or reuse an id, because likes are stored against it.
+- Photos load from the shop websites. If a shop removes a product, its photo stops showing.
+- To change the family password, run only the last statement of `setup.sql` again with the new password.
+- To protect the project: keep sign-ups off in **Authentication > Sign In / Providers**. If the publishable key is misused, create a new one in **Project Settings > API Keys**, delete the old one, and update `config.js`.

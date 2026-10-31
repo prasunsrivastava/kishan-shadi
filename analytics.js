@@ -1,7 +1,7 @@
 (function () {
-  const { rpc, errorText, session, items, byId, price, thumb, el, renderSignIn, demoBanner } = window.KS;
+  const { rpc, errorText, session, items, byId, loadItems, price, thumb, el, renderSignIn, demoBanner, whileVisible } = window.KS;
   const $ = id => document.getElementById(id);
-  let me = null, rows = [], timer = null;
+  let me = null, rows = [], stopRefresh = null, itemsLoadedAt = -Infinity;
 
   const banner = demoBanner(); if (banner) $("demo").append(banner);
 
@@ -36,7 +36,7 @@
           el("a", { href: it.url, target: "_blank", rel: "noopener", "aria-label": "Open " + it.name + " on " + it.shop },
             el("img", { src: thumb(it, 160), alt: it.name, loading: "lazy", referrerpolicy: "no-referrer" })),
           el("div", { class: "main" },
-            el("div", { class: "title" }, el("b", {}, it.name), el("span", {}, it.brand + " · " + price(it))),
+            el("div", { class: "title" }, el("b", {}, it.name), el("span", {}, it.brand + " · " + price(it) + (it.suggested_by ? " · from " + it.suggested_by + "'s idea" : ""))),
             el("div", { class: "track", role: "img", "aria-label": names.length + " likes" }, el("i", { style: "width:" + Math.max(6, Math.round(names.length / max * 100)) + "%" })),
             el("div", { class: "names" }, el("span", { class: "cnt" }, names.length + (names.length === 1 ? " like" : " likes")), " · " + names.join(", "))));
       }));
@@ -56,7 +56,9 @@
   }
 
   async function load() {
+    if (!me) return;
     try {
+      if (Date.now() - itemsLoadedAt > 10 * 60000) { await loadItems(me.password); itemsLoadedAt = Date.now(); }
       rows = await rpc("family_all_likes", { p_password: me.password }) || [];
       render();
       $("updated").textContent = "Updated " + new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
@@ -70,10 +72,12 @@
     me = { name: s.name, password: s.password };
     $("signin").hidden = true; $("app").hidden = false;
     $("me").textContent = me.name;
-    load(); clearInterval(timer); timer = setInterval(load, 30000);
+    load();
+    if (stopRefresh) stopRefresh();
+    stopRefresh = whileVisible(load, 30000);               // no calls while the tab is hidden
   }
   function signOut() {
-    session.clear(); me = null; clearInterval(timer);
+    session.clear(); me = null; if (stopRefresh) { stopRefresh(); stopRefresh = null; }
     $("app").hidden = true; $("signin").hidden = false;
     renderSignIn($("signin"), start, "Type your name and the family password to see the results.");
   }

@@ -8,7 +8,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Mukta:wght@400;600;700&family=Rozha+One&display=swap">
-<link rel="stylesheet" href="style.css">
+<link rel="stylesheet" href="style.css?v=2">
 </head>
 <body>
 <div id="demo"></div>
@@ -25,11 +25,19 @@
     <div class="wrap">
       <div class="who">Hi, <b id="me"></b> <span class="pill" id="mycount"></span></div>
       <span class="spacer"></span>
+      <button class="btn-ghost" type="button" data-suggest>Suggest an outfit</button>
       <a class="btn-ghost" href="analytics.html">See results</a>
       <button class="linkbtn" id="signout" type="button">Not you? Sign out</button>
     </div>
   </div>
   <main class="wrap">
+    <section class="cta" aria-label="Suggest an outfit">
+      <div>
+        <b>Seen an outfit you like for Kishan?</b>
+        <span>Send up to 10 photos or links. Each day we find similar outfits you can buy and add them here for everyone to vote on.</span>
+      </div>
+      <button class="btn-primary" type="button" data-suggest>Suggest an outfit</button>
+    </section>
     <div class="tools">
       <div class="seg" id="filters" role="group" aria-label="Show"></div>
       <label for="sort">Sort
@@ -42,7 +50,7 @@
       <span class="count-note" id="shown"></span>
     </div>
     <div class="grid" id="grid"></div>
-    <p class="foot-note">Prices are as shown on each shop's website on 31 Oct 2026. They can change. Designer pieces are usually made to order, so check the delivery time before you order.</p>
+    <p class="foot-note">Prices are as shown on each shop's website on the day we added the outfit. They can change. Designer pieces are usually made to order, so check the delivery time before you order.</p>
   </main>
 </div>
 
@@ -54,6 +62,7 @@
     <div class="info">
       <h3 id="lb-name"></h3>
       <div class="sub" id="lb-sub"></div>
+      <p class="lb-note" id="lb-note" hidden></p>
       <button class="heart" id="lb-heart" type="button" aria-pressed="false"></button>
       <div class="who-liked" id="lb-who"></div>
       <a id="lb-link" target="_blank" rel="noopener">Open on the shop's website ↗</a>
@@ -62,9 +71,32 @@
   <button class="nav" id="lb-next" type="button" aria-label="Next outfit">›</button>
 </div>
 
-<script src="config.js"></script>
-<script src="items.js"></script>
-<script src="common.js"></script>
-<script src="gallery.js"></script>
+<div class="sheet-wrap" id="sg" hidden role="dialog" aria-modal="true" aria-labelledby="sg-title">
+  <div class="sheet">
+    <button class="close" id="sg-close" type="button" aria-label="Close">×</button>
+    <h2 id="sg-title">Suggest an outfit</h2>
+    <p class="lede">Add photos or links of outfits you like. They can be from a shop, Instagram, Pinterest or a wedding you went to. Once a day, we look for similar outfits that you can buy in India and add them under <b>New</b> for everyone to vote on.</p>
+    <form id="sg-form" novalidate>
+      <div class="sg-label"><span>Photos</span><span class="muted" id="sg-count"></span></div>
+      <div class="sg-thumbs" id="sg-thumbs"></div>
+      <label class="btn-ghost sg-add" id="sg-add">+ Add photos
+        <input id="sg-files" type="file" accept="image/*" multiple hidden>
+      </label>
+      <label for="sg-links" class="sg-label">Links <span class="muted">(one per line, up to 10)</span></label>
+      <textarea id="sg-links" rows="3" placeholder="https://…"></textarea>
+      <label for="sg-note" class="sg-label">What do you like about it? <span class="muted">(optional)</span></label>
+      <textarea id="sg-note" rows="2" maxlength="500" placeholder="For example: the colour, the long jacket, the drape"></textarea>
+      <p id="sg-msg" role="status" hidden></p>
+      <button class="btn-primary" id="sg-send" type="submit">Send suggestion</button>
+    </form>
+    <h3 class="sg-h">Your suggestions</h3>
+    <div id="sg-mine"></div>
+  </div>
+</div>
+
+<script src="config.js?v=2"></script>
+<script src="items.js?v=2"></script>
+<script src="common.js?v=2"></script>
+<script src="gallery.js?v=2"></script>
 </body>
 </html>
